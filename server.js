@@ -12,6 +12,9 @@ import fatsecret from './backend/fatsecret.js';
 import edamam from './backend/edamam.js';
 import spoonacular from './backend/spoonacular.js';
 import openaiVision from './backend/openaiVision.js';
+import visionRouter from "./backend/openaiVision.js";
+
+app.use("/vision", visionRouter);
 
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
