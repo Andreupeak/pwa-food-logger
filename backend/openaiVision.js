@@ -10,23 +10,25 @@ const client = new OpenAI({
 
 async function analyzeImage(imagePath) {
   try {
-    // read image and convert to base64
+    // read image -> base64
     const imageBuffer = fs.readFileSync(imagePath);
     const base64 = imageBuffer.toString("base64");
 
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",   // supports vision
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "user",
           content: [
             {
               type: "image_url",
-              image_url: `data:image/jpeg;base64,${base64}`
+              image_url: {
+                url: `data:image/jpeg;base64,${base64}`
+              }
             },
             {
               type: "text",
-              text: "Identify foods in this image and estimate portions."
+              text: "Identify foods in this photo and estimate portions."
             }
           ]
         }
