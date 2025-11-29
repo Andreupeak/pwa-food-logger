@@ -1,9 +1,8 @@
 // backend/openaiVision.js
-// Handles image → base64 → OpenAI Vision → portion estimation
+// ESM version for your project
 
-const fs = require("fs");
-const path = require("path");
-const OpenAI = require("openai");
+import fs from "fs";
+import OpenAI from "openai";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -11,29 +10,29 @@ const client = new OpenAI({
 
 async function analyzeImage(imagePath) {
   try {
-    // read image
-    const fileData = fs.readFileSync(imagePath);
-    const base64Image = fileData.toString("base64");
+    // Convert image → base64
+    const bytes = fs.readFileSync(imagePath);
+    const base64Image = bytes.toString("base64");
 
-    // call OpenAI vision
+    // Send to OpenAI Vision
     const response = await client.chat.completions.create({
-      model: "gpt-4.1-mini", // ✔ working model
+      model: "gpt-4.1-mini", // ✔ valid model
       messages: [
         {
           role: "system",
           content:
-            "You are a food vision assistant. Detect foods and estimate portion sizes in grams or household measures."
+            "You are a food vision assistant. Identify foods and estimate portion sizes in grams or household measures."
         },
         {
           role: "user",
           content: [
             {
               type: "input_image",
-              image_url: `data:image/jpeg;base64,${base64Image}`
+              image_url: `data:image/jpeg;base64,${base64Image}`,
             },
             {
               type: "text",
-              text: "Identify foods and estimate portion sizes. Output in strict JSON like: [{\"food\": \"rice\", \"amount\": \"120g\"}, ...]"
+              text: "Identify foods and estimate portion sizes. Output in JSON like: [{\"food\":\"rice\",\"amount\":\"120g\"}]"
             }
           ]
         }
@@ -42,10 +41,10 @@ async function analyzeImage(imagePath) {
 
     return response.choices[0].message;
 
-  } catch (error) {
-    console.error("OpenAI Vision error:", error);
-    return { error: error.message };
+  } catch (err) {
+    console.error("OpenAI Vision error:", err);
+    return { error: err.message };
   }
 }
 
-module.exports = { analyzeImage };
+export default { analyzeImage };
