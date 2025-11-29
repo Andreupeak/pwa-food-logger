@@ -1,76 +1,51 @@
 // backend/openaiVision.js
-//
-// FULL WORKING OPENAI VISION ENDPOINT
-// - Supports image upload (multipart/form-data)
-// - Uses correct 2025 Vision model (gpt-4o-mini)
-// - Works with Render (no local .env required)
-// - Returns portion estimates + food recognition
-//
+// Handles image → base64 → OpenAI Vision → portion estimation
 
-import OpenAI from "openai";
-import multer from "multer";    // to handle file uploads
-import express from "express";
-import fs from "fs";
-
-const router = express.Router();
-const upload = multer({ dest: "uploads/" });
+const fs = require("fs");
+const path = require("path");
+const OpenAI = require("openai");
 
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY
 });
 
-// ---- VISION ANALYSIS ROUTE ----
-// POST /vision/analyze
-// Body: multipart/form-data with "image" file
-router.post("/analyze", upload.single("image"), async (req, res) => {
+async function analyzeImage(imagePath) {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: "Missing image file" });
-    }
+    // read image
+    const fileData = fs.readFileSync(imagePath);
+    const base64Image = fileData.toString("base64");
 
-    // Load the image file
-    const imageBuffer = fs.readFileSync(req.file.path);
-
-    // Make Vision API request
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",      // ✔ correct model
+    // call OpenAI vision
+    const response = await client.chat.completions.create({
+      model: "gpt-4.1-mini", // ✔ working model
       messages: [
+        {
+          role: "system",
+          content:
+            "You are a food vision assistant. Detect foods and estimate portion sizes in grams or household measures."
+        },
         {
           role: "user",
           content: [
             {
-              type: "text",
-              text:
-                "Identify the foods in this image and estimate sensible portion sizes in grams or cups. Then list them cleanly in structured form.",
+              type: "input_image",
+              image_url: `data:image/jpeg;base64,${base64Image}`
             },
             {
-              type: "image",
-              image: imageBuffer.toString("base64"), // base64 encoded
-            },
-          ],
-        },
-      ],
+              type: "text",
+              text: "Identify foods and estimate portion sizes. Output in strict JSON like: [{\"food\": \"rice\", \"amount\": \"120g\"}, ...]"
+            }
+          ]
+        }
+      ]
     });
 
-    // Extract output
-    const output = completion.choices?.[0]?.message ?? null;
-
-    // Delete temporary file from Render disk
-    fs.unlinkSync(req.file.path);
-
-    return res.json({
-      success: true,
-      output,
-    });
+    return response.choices[0].message;
 
   } catch (error) {
-    console.error("Vision API error:", error);
-
-    return res.status(500).json({
-      error: "OpenAI Vision API error",
-      details: error?.error?.message || error.message,
-    });
+    console.error("OpenAI Vision error:", error);
+    return { error: error.message };
   }
-});
+}
 
-export default router;
+module.exports = { analyzeImage };
