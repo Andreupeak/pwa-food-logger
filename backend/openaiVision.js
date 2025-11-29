@@ -1,8 +1,8 @@
 // backend/openaiVision.js
-// ESM version for your project
-
 import fs from "fs";
 import OpenAI from "openai";
+import dotenv from "dotenv";
+dotenv.config();
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -10,40 +10,36 @@ const client = new OpenAI({
 
 async function analyzeImage(imagePath) {
   try {
-    // Convert image → base64
-    const bytes = fs.readFileSync(imagePath);
-    const base64Image = bytes.toString("base64");
+    // read image and convert to base64
+    const imageBuffer = fs.readFileSync(imagePath);
+    const base64 = imageBuffer.toString("base64");
 
-    // Send to OpenAI Vision
     const response = await client.chat.completions.create({
-      model: "gpt-4.1-mini", // ✔ valid model
+      model: "gpt-4o-mini",   // supports vision
       messages: [
-        {
-          role: "system",
-          content:
-            "You are a food vision assistant. Identify foods and estimate portion sizes in grams or household measures."
-        },
         {
           role: "user",
           content: [
             {
-              type: "input_image",
-              image_url: `data:image/jpeg;base64,${base64Image}`,
+              type: "image_url",
+              image_url: `data:image/jpeg;base64,${base64}`
             },
             {
               type: "text",
-              text: "Identify foods and estimate portion sizes. Output in JSON like: [{\"food\":\"rice\",\"amount\":\"120g\"}]"
+              text: "Identify foods in this image and estimate portions."
             }
           ]
         }
       ]
     });
 
-    return response.choices[0].message;
+    return {
+      success: true,
+      result: response.choices?.[0]?.message?.content || "No response"
+    };
 
   } catch (err) {
-    console.error("OpenAI Vision error:", err);
-    return { error: err.message };
+    return { error: err.message || String(err) };
   }
 }
 
