@@ -11,12 +11,12 @@ import { dirname } from 'path';
 import fatsecret from './backend/fatsecret.js';
 import edamam from './backend/edamam.js';
 import spoonacular from './backend/spoonacular.js';
-import openaiVision from './backend/openaiVision.js';
-import visionRouter from "./backend/openaiVision.js";
 
-app.use("/vision", visionRouter);
+// Only ONE import — correct
+import openaiVision from './backend/openaiVision.js';
 
 dotenv.config();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -29,7 +29,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/', express.static(path.join(__dirname, 'public')));
 
-// EDAMAM: Food parser (natural language)
+// --------------------- EDAMAM: Food parser ---------------------
 app.post('/api/edamam/food-parser', async (req, res) => {
   try {
     const { text } = req.body;
@@ -41,7 +41,7 @@ app.post('/api/edamam/food-parser', async (req, res) => {
   }
 });
 
-// EDAMAM: Nutrition analysis
+// --------------------- EDAMAM: Nutrition analysis ---------------------
 app.post('/api/edamam/nutrition', async (req, res) => {
   try {
     const { ingredients } = req.body;
@@ -53,7 +53,7 @@ app.post('/api/edamam/nutrition', async (req, res) => {
   }
 });
 
-// EDAMAM: recipe search / meal planner
+// --------------------- EDAMAM: Recipes ---------------------
 app.post('/api/edamam/recipes', async (req, res) => {
   try {
     const { q, calories, diet } = req.body;
@@ -64,7 +64,7 @@ app.post('/api/edamam/recipes', async (req, res) => {
   }
 });
 
-// SPOONACULAR: find recipes by ingredients
+// --------------------- SPOONACULAR ---------------------
 app.post('/api/spoonacular/search-recipes', async (req, res) => {
   try {
     const { ingredients } = req.body;
@@ -76,7 +76,7 @@ app.post('/api/spoonacular/search-recipes', async (req, res) => {
   }
 });
 
-// FATSECRET: search
+// --------------------- FATSECRET ---------------------
 app.post('/api/fatsecret/search', async (req, res) => {
   try {
     const { query } = req.body;
@@ -88,22 +88,30 @@ app.post('/api/fatsecret/search', async (req, res) => {
   }
 });
 
-// OPENAI VISION: scan image
+// --------------------- OPENAI VISION ---------------------
 app.post('/api/vision/scan', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'image required' });
+
     const result = await openaiVision.analyzeImage(req.file.path);
-    // cleanup
-    fs.unlinkSync(req.file.path);
+
+    // Delete uploaded image after processing
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
     res.json(result);
+
   } catch (err) {
+
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
     res.status(500).json({ error: err.message || String(err) });
   }
 });
 
+// --------------------- HEALTH CHECK ---------------------
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
 
+// --------------------- SERVE FRONTEND ---------------------
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
