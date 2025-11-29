@@ -1,1 +1,9 @@
-
+{
+  "name": "PWA Food Logger",
+  "short_name": "FoodLog",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "icons": []
+}
