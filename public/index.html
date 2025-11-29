@@ -1,1 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PWA Food Logger</title>
+  <link rel="manifest" href="/manifest.json" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-3xl mx-auto p-4">
+    <header class="mb-4">
+      <h1 class="text-2xl font-bold">PWA Food Logger — API Sandbox</h1>
+      <p class="text-sm text-gray-600">Personal testing: Spoonacular, FatSecret, Edamam, OpenAI Vision</p>
+    </header>
 
+    <nav class="flex gap-2 mb-4 flex-wrap">
+      <button data-tab="quicklog" class="tab-btn px-3 py-2 bg-white rounded shadow">Quick Log</button>
+      <button data-tab="packaged" class="tab-btn px-3 py-2 bg-white rounded shadow">Packaged</button>
+      <button data-tab="homecook" class="tab-btn px-3 py-2 bg-white rounded shadow">Home-Cooked</button>
+      <button data-tab="recipes" class="tab-btn px-3 py-2 bg-white rounded shadow">Recipes</button>
+      <button data-tab="planner" class="tab-btn px-3 py-2 bg-white rounded shadow">Meal Planner</button>
+      <button data-tab="vision" class="tab-btn px-3 py-2 bg-white rounded shadow">Scan Meal</button>
+    </nav>
+
+    <main id="tab-content" class="bg-white p-4 rounded shadow"></main>
+
+    <footer class="mt-6 text-xs text-gray-500">
+      Personal use. Set API keys on Render or your environment. See README.
+    </footer>
+  </div>
+
+  <script type="module" src="/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').then(()=>console.log('SW registered')).catch(()=>{});
+    }
+  </script>
+</body>
+</html>
