@@ -1,4 +1,2 @@
 body { font-family: Inter, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial; }
 .results { white-space: pre-wrap; font-family: monospace; background:#f8fafc; padding:8px; border-radius:6px; }
-#log-modal { display: none; }
-#log-modal.show { display: flex; }
