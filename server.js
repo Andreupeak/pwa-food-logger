@@ -19,7 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: "uploads/" });
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -27,7 +27,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/', express.static(path.join(__dirname, 'public')));
 
-/* --------------------- EDAMAM: Food parser --------------------- */
+/* ------------------ EDAMAM ------------------ */
 app.post('/api/edamam/food-parser', async (req, res) => {
   try {
     const { text } = req.body;
@@ -39,7 +39,6 @@ app.post('/api/edamam/food-parser', async (req, res) => {
   }
 });
 
-/* --------------------- EDAMAM: Nutrition analysis --------------------- */
 app.post('/api/edamam/nutrition', async (req, res) => {
   try {
     const { ingredients } = req.body;
@@ -51,43 +50,6 @@ app.post('/api/edamam/nutrition', async (req, res) => {
   }
 });
 
-/* --------------------- EDAMAM: Nutrition for a single selected item --------------- */
-function formatEdamamNutrition(nutriResponse, nameHint = '') {
-  try {
-    const calories = Math.round(nutriResponse.calories || 0);
-    const totalNutrients = nutriResponse.totalNutrients || {};
-    const protein = totalNutrients.PROCNT ? +(totalNutrients.PROCNT.quantity || 0) : 0;
-    const carbs = totalNutrients.CHOCDF ? +(totalNutrients.CHOCDF.quantity || 0) : 0;
-    const fat = totalNutrients.FAT ? +(totalNutrients.FAT.quantity || 0) : 0;
-    const weight = nutriResponse.totalWeight || null;
-    const serving_text = weight ? `${Math.round(weight)} g (analyzed)` : 'per recipe';
-    return {
-      name: nameHint || (nutriResponse.recipe && nutriResponse.recipe.label) || 'Item',
-      serving_text,
-      calories,
-      protein_g: +(protein.toFixed(1)),
-      carbs_g: +(carbs.toFixed(1)),
-      fat_g: +(fat.toFixed(1)),
-      raw: nutriResponse
-    };
-  } catch (e) {
-    return { error: 'Could not format nutrition', raw: nutriResponse };
-  }
-}
-
-app.post('/api/edamam/nutrition-by-item', async (req, res) => {
-  try {
-    const { text, name } = req.body;
-    if (!text) return res.status(400).json({ error: 'text required (e.g. "100 g basmati rice")' });
-    const nutri = await edamam.analyzeNutrition([text]);
-    const card = formatEdamamNutrition(nutri, name || text);
-    res.json(card);
-  } catch (err) {
-    res.status(500).json({ error: err.message || String(err) });
-  }
-});
-
-/* --------------------- EDAMAM: recipe search / meal planner --------------------- */
 app.post('/api/edamam/recipes', async (req, res) => {
   try {
     const { q, calories, diet } = req.body;
@@ -98,7 +60,7 @@ app.post('/api/edamam/recipes', async (req, res) => {
   }
 });
 
-/* --------------------- SPOONACULAR --------------------- */
+/* ------------------ SPOONACULAR ------------------ */
 app.post('/api/spoonacular/search-recipes', async (req, res) => {
   try {
     const { ingredients } = req.body;
@@ -110,7 +72,7 @@ app.post('/api/spoonacular/search-recipes', async (req, res) => {
   }
 });
 
-/* --------------------- FATSECRET --------------------- */
+/* ------------------ FATSECRET ------------------ */
 app.post('/api/fatsecret/search', async (req, res) => {
   try {
     const { query } = req.body;
@@ -122,12 +84,15 @@ app.post('/api/fatsecret/search', async (req, res) => {
   }
 });
 
-/* --------------------- OPENAI VISION --------------------- */
-app.post('/api/vision/scan', upload.single('image'), async (req, res) => {
+/* ------------------ OPENAI VISION ------------------ */
+app.post('/api/vision/scan', upload.single("image"), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'image required' });
+    if (!req.file) return res.status(400).json({ error: "image required" });
+
     const result = await openaiVision.analyzeImage(req.file.path);
-    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
+    fs.unlinkSync(req.file.path);
+
     res.json(result);
   } catch (err) {
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
@@ -135,13 +100,13 @@ app.post('/api/vision/scan', upload.single('image'), async (req, res) => {
   }
 });
 
-/* --------------------- HEALTH --------------------- */
+/* ------------------ HEALTH CHECK ------------------ */
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
 
-/* --------------------- SPA fallback --------------------- */
+/* ------------------ SPA FALLBACK ------------------ */
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-/* --------------------- START --------------------- */
+/* ------------------ START ------------------ */
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
